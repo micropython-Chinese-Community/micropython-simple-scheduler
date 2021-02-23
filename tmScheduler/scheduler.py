@@ -1,5 +1,12 @@
 '''
     simple Time base Task Scheduler
+
+    Author: shaoziyang
+    Date:   2021.2
+    Ver:    1.2
+
+    https://www.micropython.org.cn
+
 '''
 
 from micropython import const
@@ -9,12 +16,12 @@ TASK_RUN = const(1)
 
 class Task():
 
-    def __init__(self, callback, param = None, interval = 1000, state = TASK_RUN):
+    def __init__(self, callback, *param, interval = 1000, state = TASK_RUN):
         self._callback = callback
         self._param = param
-        self._cnt = 10
         self._intv = interval
         self._state = state
+        self._cnt = 10
         self._rt = 0
 
     def pause(self):
@@ -24,10 +31,7 @@ class Task():
         self._state = TASK_RUN
 
     def run(self):
-        if self._param == None:
-            self._callback()
-        else:
-            self._callback(self._param)
+        self._callback(*self._param)
 
 class Scheduler():
     def __init__(self, tm, interval = 100, task_idle = None, task_err = None):
@@ -55,12 +59,17 @@ class Scheduler():
 
     def scheduler(self):
         while True:
-            for i in range(len(self._tasks)):
-                task = self._tasks[i]
-                self._run(task)
-            if self._task_idle:
-                self._task_idle()
-
+            try:
+                for i in range(len(self._tasks)):
+                    task = self._tasks[i]
+                    self._run(task)
+                if self._task_idle:
+                    self._task_idle()
+            except KeyboardInterrupt:
+                return
+            except Exception as e:
+                print('except {}'.format(e))
+            
     def find(self, task):
         try:
             return self._tasks.index(task)
@@ -70,10 +79,13 @@ class Scheduler():
     def clear(self):
         self._tasks.clear()
 
-    def add(self, task):
+    def add(self, task, stat = TASK_RUN):
         if self.find(task) == None:
             self._tasks.append(task)
             task._cnt = task._intv // self._interval
+            print('add task:', task._callback.__name__)
+        if stat == TASK_STOP:
+            self.pause(task)
 
     def delete(self, task):
         try:
@@ -93,3 +105,4 @@ class Scheduler():
         if self.find(task) != None:
             task._rt = task._cnt
             self._run(task)
+
