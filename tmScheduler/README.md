@@ -23,9 +23,9 @@ def LED():
 def pn(n):
     print(n)
 
-task1 = Task(LED, None, 1000)
-task2 = Task(pn, 1, 1000)
-task3 = Task(pn, 2, 1500)
+task1 = Task(LED)
+task2 = Task(pn, 1, interval = 1000)
+task3 = Task(pn, 2, interval = 1500)
 
 sc = Scheduler(machine.Timer(-1))
 sc.add(task1)
